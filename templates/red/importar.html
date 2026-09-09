@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Importar de Mikrotik — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Importar clientes de Mikrotik{% endblock %}
+{% block nav_importar %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card-panel">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>{% endif %}
+
+        {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {% if field.name == 'crear_planes' %}
+              <div class="form-check">{{ field }} <span class="form-text ms-1">{{ field.help_text }}</span></div>
+            {% else %}
+              {{ field }}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% endif %}
+            {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+
+        <button type="submit" name="modo" value="simular" class="btn btn-outline-primary">Simular (no guarda)</button>
+        <button type="submit" name="modo" value="importar" class="btn btn-success"
+                style="background:#1abb9c;border-color:#1abb9c">
+          Importar de verdad
+        </button>
+      </form>
+    </div>
+
+    <div class="card-panel mt-3">
+      <h2 class="h6 text-muted">¿Cómo saco el archivo del router?</h2>
+      <ol class="small mb-0">
+        <li>En WinBox abre <strong>New Terminal</strong>.</li>
+        <li>Escribe: <code>/queue simple export file=colas</code></li>
+        <li>Ve a <strong>Files</strong>, descarga <code>colas.rsc</code> y súbelo aquí.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card-panel h-100">
+      <h2 class="h6 text-muted">Resultado {% if modo %}({{ modo }}){% endif %}</h2>
+      {% if salida %}
+        <pre style="max-height:70vh;overflow:auto;font-size:.8rem;background:#1e1e1e;color:#e6e6e6;padding:12px;border-radius:6px;">{{ salida }}</pre>
+      {% else %}
+        <p class="text-muted small">Aquí aparece el detalle cuando ejecutes una simulación o importación.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

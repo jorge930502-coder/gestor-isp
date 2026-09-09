@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Consumo de {{ cliente.nombre }} — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Consumo en vivo: {{ cliente.nombre }}{% endblock %}
+{% block nav_clientes %}active{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'clientes:detalle' cliente.pk %}" class="btn btn-outline-secondary btn-sm">← Volver a la ficha</a>
+  <span class="text-muted small ms-2">
+    IP <code>{{ cliente.ip|default:"—" }}</code>
+    {% if cliente.plan %}· plan {{ cliente.plan.mbps_bajada }}/{{ cliente.plan.mbps_subida }} Mbps{% endif %}
+    {% if router %}· router {{ router.nombre }}{% endif %}
+  </span>
+</div>
+
+{% if error %}
+  <div class="alert alert-warning">{{ error }}</div>
+{% else %}
+<div id="aviso-corte" class="alert alert-danger py-2" hidden>La cola de este cliente está <strong>deshabilitada</strong> (cortada) en el router.</div>
+
+<div class="tiles mb-3">
+  <div class="tile"><div class="k">Bajada ahora</div><div class="v ok" id="v-baj">—</div></div>
+  <div class="tile"><div class="k">Subida ahora</div><div class="v" id="v-sub">—</div></div>
+  <div class="tile"><div class="k">Descargado (total)</div><div class="v" style="font-size:1.2rem" id="v-tb">—</div></div>
+  <div class="tile"><div class="k">Subido (total)</div><div class="v" style="font-size:1.2rem" id="v-ts">—</div></div>
+</div>
+
+<div class="card-panel">
+  <canvas id="chart" height="90"></canvas>
+  <p class="text-muted small mt-2 mb-0" id="pie">Se actualiza cada 3 segundos mientras esta pantalla esté abierta.</p>
+</div>
+
+<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script>
+(function () {
+  const MAXP = 40;
+  const labels = [], baj = [], sub = [];
+  const chart = new Chart(document.getElementById('chart').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Bajada (Mbps)', data: baj, borderColor:'#1abb9c', backgroundColor:'rgba(26,187,156,.12)', fill:true, tension:.3, pointRadius:0 },
+      { label: 'Subida (Mbps)', data: sub, borderColor:'#3498db', backgroundColor:'rgba(52,152,219,.10)', fill:true, tension:.3, pointRadius:0 },
+    ]},
+    options: { animation:false, responsive:true, scales:{ y:{ beginAtZero:true, title:{display:true,text:'Mbps'} } }, plugins:{ legend:{ position:'bottom' } } }
+  });
+  function fmt(b){ if(b>=1e9)return (b/1e9).toFixed(2)+' Gbps'; if(b>=1e6)return (b/1e6).toFixed(1)+' Mbps'; if(b>=1e3)return (b/1e3).toFixed(0)+' Kbps'; return b+' bps'; }
+  function tick(){
+    fetch('{% url "clientes:consumo_datos" cliente.pk %}')
+      .then(r=>r.json())
+      .then(d=>{
+        if(d.error){ document.getElementById('pie').textContent = d.error; return; }
+        document.getElementById('aviso-corte').hidden = !d.deshabilitada;
+        document.getElementById('v-baj').textContent = fmt(d.bajada_bps);
+        document.getElementById('v-sub').textContent = fmt(d.subida_bps);
+        document.getElementById('v-tb').textContent = d.total_bajada;
+        document.getElementById('v-ts').textContent = d.total_subida;
+        labels.push(new Date().toLocaleTimeString().slice(0,8));
+        baj.push(+(d.bajada_bps/1e6).toFixed(2));
+        sub.push(+(d.subida_bps/1e6).toFixed(2));
+        while(labels.length>MAXP){ labels.shift(); baj.shift(); sub.shift(); }
+        chart.update();
+      })
+      .catch(()=>{ document.getElementById('pie').textContent='Sin datos.'; });
+  }
+  tick(); setInterval(tick, 3000);
+})();
+</script>
+{% endif %}
+{% endblock %}

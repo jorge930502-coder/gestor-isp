@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Facturas — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Facturas{% endblock %}
+{% block nav_facturas %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="text-muted">
+    Pendiente: <strong>${{ resumen.pendiente|default:"0" }}</strong> ·
+    Cobrado: <strong>${{ resumen.pagado|default:"0" }}</strong>
+  </div>
+  <div>
+    <form method="post" action="{% url 'facturacion:recalcular' %}" class="d-inline">
+      {% csrf_token %}
+      <button class="btn btn-outline-secondary">Recalcular montos por plan</button>
+    </form>
+    <a href="{% url 'facturacion:generar' %}" class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">Generar facturas del mes</a>
+  </div>
+</div>
+
+<form method="get" class="card-panel mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label small mb-1">Buscar cliente / IP</label>
+      <input type="text" name="q" value="{{ q }}" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Estado</label>
+      <select name="estado" class="form-select">
+        <option value="">Todas</option>
+        <option value="pendiente" {% if estado_sel == 'pendiente' %}selected{% endif %}>Pendientes</option>
+        <option value="vencidas" {% if estado_sel == 'vencidas' %}selected{% endif %}>Vencidas</option>
+        <option value="pagada" {% if estado_sel == 'pagada' %}selected{% endif %}>Pagadas</option>
+        <option value="anulada" {% if estado_sel == 'anulada' %}selected{% endif %}>Anuladas</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-grid"><button class="btn btn-outline-primary">Filtrar</button></div>
+  </div>
+</form>
+
+<div class="card-panel p-0">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Cliente</th><th>Periodo</th><th>Monto</th><th>Pagado</th><th>Vence</th><th>Corte</th><th>Estado</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for f in facturas %}
+        <tr>
+          <td><a href="{% url 'clientes:detalle' f.cliente.pk %}">{{ f.cliente.nombre }}</a></td>
+          <td><a href="{% url 'facturacion:factura_detalle' f.pk %}">{{ f.periodo_texto }}</a></td>
+          <td>${{ f.monto }}</td>
+          <td>${{ f.pagado }}</td>
+          <td class="{% if f.vencida %}text-danger fw-bold{% endif %}">{{ f.vencimiento|date:"d/m/Y" }}</td>
+          <td>{{ f.corte|date:"d/m/Y"|default:"—" }}</td>
+          <td>
+            {% if f.estado == 'pagada' %}<span class="badge bg-success">Pagada</span>
+            {% elif f.estado == 'anulada' %}<span class="badge bg-secondary">Anulada</span>
+            {% elif f.vencida %}<span class="badge bg-danger">Vencida</span>
+            {% else %}<span class="badge bg-warning text-dark">Pendiente</span>{% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            {% if f.estado != 'pagada' and f.estado != 'anulada' and perms.facturacion.add_pago %}
+              <a href="{% url 'facturacion:registrar_pago' %}?factura={{ f.pk }}" class="btn btn-sm btn-outline-success">Pago</a>
+            {% endif %}
+            {% if f.estado != 'anulada' and perms.facturacion.change_factura %}
+              <a href="{% url 'facturacion:factura_anular' f.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-warning">Anular</a>
+            {% endif %}
+            {% if perms.facturacion.delete_factura %}
+              <a href="{% url 'facturacion:factura_eliminar' f.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay facturas. Usa "Generar facturas del mes".</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="text-muted small mt-2">{{ total }} facturas.</p>
+{% endblock %}

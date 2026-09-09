@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Historial de pagos — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Historial de pagos{% endblock %}
+{% block nav_lista_pagos %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="text-muted">Cobrado este mes: <strong>${{ mes_total }}</strong></div>
+  <a href="{% url 'facturacion:registrar_pago' %}" class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">+ Registrar pago</a>
+</div>
+
+<form method="get" class="card-panel mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label small mb-1">Buscar cliente</label>
+      <input type="text" name="q" value="{{ q }}" class="form-control">
+    </div>
+    <div class="col-md-2 d-grid"><button class="btn btn-outline-primary">Filtrar</button></div>
+  </div>
+</form>
+
+<div class="card-panel p-0">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Método</th><th>Factura</th><th>Referencia</th><th>Registró</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for p in pagos %}
+        <tr>
+          <td>{{ p.fecha|date:"d/m/Y" }}</td>
+          <td><a href="{% url 'clientes:detalle' p.cliente.pk %}">{{ p.cliente.nombre }}</a></td>
+          <td>${{ p.monto }}</td>
+          <td>{{ p.get_metodo_display }}</td>
+          <td>{{ p.factura.periodo_texto|default:"—" }}</td>
+          <td>{{ p.referencia|default:"—" }}</td>
+          <td>{{ p.registrado_por.get_username|default:"—" }}</td>
+          <td class="text-end">
+            {% if perms.facturacion.delete_pago %}
+              <a href="{% url 'facturacion:pago_eliminar' p.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">Sin pagos registrados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="text-muted small mt-2">{{ total }} pagos.</p>
+{% endblock %}

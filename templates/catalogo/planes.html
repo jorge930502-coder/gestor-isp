@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Planes — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Planes de internet{% endblock %}
+{% block nav_planes %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <p class="text-muted mb-0">Los planes definen la velocidad y el precio mensual que se cobra.</p>
+  <a href="{% url 'catalogo:plan_crear' %}" class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">+ Nuevo plan</a>
+</div>
+
+<div class="card-panel p-0">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Nombre</th><th>Bajada</th><th>Subida</th><th>Precio mensual</th><th>Clientes</th><th>$/mes (estimado)</th><th>Activo</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for p in planes %}
+        <tr>
+          <td>{{ p.nombre }}</td>
+          <td>{{ p.mbps_bajada }} Mbps</td>
+          <td>{{ p.mbps_subida }} Mbps</td>
+          <td>${{ p.precio_mensual }}</td>
+          <td>
+            {% if p.n_clientes %}
+              <a href="{% url 'clientes:lista' %}?plan={{ p.pk }}" class="badge bg-primary text-decoration-none">
+                {{ p.n_clientes }} — ver
+              </a>
+            {% else %}
+              <span class="text-muted">0</span>
+            {% endif %}
+          </td>
+          <td>${{ p.ingreso_mes|floatformat:0 }}</td>
+          <td>{% if p.activo %}<span class="badge bg-success">sí</span>{% else %}<span class="badge bg-secondary">no</span>{% endif %}</td>
+          <td class="text-end text-nowrap">
+            <a href="{% url 'catalogo:plan_editar' p.pk %}" class="btn btn-sm btn-outline-secondary">Editar</a>
+            {% if perms.catalogo.delete_plan %}
+              <a href="{% url 'catalogo:plan_eliminar' p.pk %}"
+                 class="btn btn-sm {% if p.n_clientes %}btn-outline-secondary disabled{% else %}btn-outline-danger{% endif %}">Eliminar</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay planes.</td></tr>
+      {% endfor %}
+    </tbody>
+    {% if total_ingreso %}
+    <tfoot class="table-light">
+      <tr>
+        <th colspan="4" class="text-end">Total estimado / mes</th>
+        <th>{{ total_clientes }}</th>
+        <th>${{ total_ingreso|floatformat:0 }}</th>
+        <th colspan="2"></th>
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+<p class="text-muted small mt-2">
+  El "$/mes estimado" es nº de clientes × precio del plan (no descuenta Gratis / Cancelados que estén en el plan).
+  Haz clic en el número de clientes para ver quiénes son.
+</p>
+{% endblock %}

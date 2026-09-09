@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Tablero — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Tablero{% endblock %}
+{% block nav_tablero %}active{% endblock %}
+
+{% block content %}
+<div class="tiles mb-4">
+  <div class="tile"><div class="k">Clientes</div><div class="v">{{ total_clientes }}</div></div>
+  <div class="tile"><div class="k">Activos</div><div class="v ok">{{ activos }}</div></div>
+  <div class="tile"><div class="k">Suspendidos</div><div class="v bad">{{ suspendidos }}</div></div>
+  <div class="tile"><div class="k">Gratis</div><div class="v mut">{{ gratis }}</div></div>
+  <div class="tile"><div class="k">Cancelados</div><div class="v mut">{{ cancelados }}</div></div>
+  <div class="tile"><div class="k">Zonas</div><div class="v">{{ total_zonas }}</div></div>
+  <div class="tile"><div class="k">Planes</div><div class="v">{{ total_planes }}</div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card-panel h-100">
+      <h2 class="h6 text-muted">Accesos rápidos</h2>
+      <div class="d-grid gap-2">
+        <a href="{% url 'clientes:crear' %}" class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">Nuevo cliente</a>
+        <a href="{% url 'clientes:lista' %}" class="btn btn-outline-secondary">Ver clientes</a>
+        <a href="{% url 'red:importar' %}" class="btn btn-outline-secondary">Importar de Mikrotik</a>
+        <a href="{% url 'red:routers' %}" class="btn btn-outline-secondary">Routers</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card-panel h-100">
+      <h2 class="h6 text-muted">Actividad reciente</h2>
+      <ul class="list-group list-group-flush">
+        {% for e in eventos %}
+          <li class="list-group-item px-0">
+            <span class="text-muted small">{{ e.fecha|date:"d/m/Y H:i" }}</span>
+            — {{ e.get_accion_display }}
+            {% if e.usuario %}<span class="text-muted">por {{ e.usuario.get_username }}</span>{% endif %}
+            <div class="small">{{ e.detalle }}</div>
+          </li>
+        {% empty %}
+          <li class="list-group-item px-0 text-muted">Sin actividad todavía.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

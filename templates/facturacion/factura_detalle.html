@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Factura {{ f.periodo_texto }} — {{ f.cliente.nombre }}{% endblock %}
+{% block page_title %}Factura{% endblock %}
+{% block nav_facturas %}active{% endblock %}
+
+{% block content %}
+<div class="mb-3 d-print-none">
+  <a href="{% url 'clientes:detalle' f.cliente.pk %}" class="btn btn-outline-secondary btn-sm">← Ficha del cliente</a>
+  <a href="{% url 'facturacion:facturas' %}" class="btn btn-outline-secondary btn-sm">Todas las facturas</a>
+  <button onclick="window.print()" class="btn btn-primary btn-sm">🖨 Imprimir</button>
+</div>
+
+<div class="factura mx-auto">
+  <div class="row">
+    <div class="col-7">
+      {% if cfg.logo %}
+        <img src="{{ cfg.logo.url }}" alt="{{ cfg.nombre_empresa }}" style="max-height:60px;max-width:100%">
+      {% elif cfg.nombre_empresa|upper == "PUNTO RED" %}
+        <div class="marca-puntored">
+          <span class="ln"></span>
+          <span class="p">PUNTO</span><span class="r">RED</span>
+          <span class="ln"></span>
+        </div>
+      {% else %}
+        <h2 class="h4 mb-0">{{ cfg.nombre_empresa }}</h2>
+      {% endif %}
+      {% if cfg.telefono %}<div class="text-muted small mt-1">Tel: {{ cfg.telefono }}</div>{% endif %}
+      {% if cfg.whatsapp %}<div class="text-muted small">WhatsApp: {{ cfg.whatsapp_local }}</div>{% endif %}
+    </div>
+    <div class="col-5 text-end">
+      <div class="h5 mb-0">FACTURA</div>
+      <div class="text-muted"># {{ f.pk }}</div>
+      <div>Periodo: <strong>{{ f.periodo_texto }}</strong></div>
+      <div>
+        Estado:
+        {% if f.estado == 'pagada' %}<span class="badge bg-success">PAGADA</span>
+        {% elif f.estado == 'anulada' %}<span class="badge bg-secondary">ANULADA</span>
+        {% elif f.vencida %}<span class="badge bg-danger">VENCIDA</span>
+        {% else %}<span class="badge bg-warning text-dark">PENDIENTE</span>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="row small">
+    <div class="col-6">
+      <div class="text-muted">Cliente</div>
+      <div class="fw-bold">{{ f.cliente.nombre }}</div>
+      {% if f.cliente.documento %}<div>Doc: {{ f.cliente.documento }}</div>{% endif %}
+      {% if f.cliente.direccion %}<div>{{ f.cliente.direccion }}</div>{% endif %}
+      {% if f.cliente.telefono %}<div>Tel: {{ f.cliente.telefono }}</div>{% endif %}
+      {% if f.cliente.plan %}<div class="mt-1">Servicio contratado: <strong>{{ f.cliente.plan.texto_factura }}</strong></div>{% endif %}
+    </div>
+    <div class="col-6 text-end">
+      <div>Vence: <strong>{{ f.vencimiento|date:"d/m/Y" }}</strong></div>
+      {% if f.corte %}<div>Corte si no paga: {{ f.corte|date:"d/m/Y" }}</div>{% endif %}
+      <div>Emitida: {{ f.creada|date:"d/m/Y" }}</div>
+    </div>
+  </div>
+
+  <table class="table table-sm mt-3">
+    <thead><tr><th>Concepto</th><th class="text-end">Valor</th></tr></thead>
+    <tbody>
+      {% if f.cliente.estado == 'gratis' %}
+        <tr><td>Servicio de cortesía</td><td class="text-end">$0</td></tr>
+      {% else %}
+        {% if f.cliente.plan %}
+          <tr><td>{{ f.cliente.plan.texto_factura }}</td>
+              <td class="text-end">${{ f.cliente.plan.precio_mensual }}</td></tr>
+        {% endif %}
+        {% for a in adicionales %}
+          <tr><td>{{ a.concepto }}</td><td class="text-end">${{ a.monto }}</td></tr>
+        {% endfor %}
+      {% endif %}
+    </tbody>
+    <tfoot>
+      <tr class="fw-bold"><td class="text-end">TOTAL</td><td class="text-end">${{ f.monto }}</td></tr>
+    </tfoot>
+  </table>
+
+  {% if pagos %}
+  <div class="small">
+    <div class="text-muted">Pagos aplicados</div>
+    {% for p in pagos %}
+      <div>{{ p.fecha|date:"d/m/Y" }} · {{ p.get_metodo_display }}{% if p.referencia %} ({{ p.referencia }}){% endif %} — ${{ p.monto }}</div>
+    {% endfor %}
+    <div class="fw-bold mt-1">Saldo: ${{ f.saldo }}</div>
+  </div>
+  {% endif %}
+
+  {% if f.estado != 'pagada' and f.estado != 'anulada' and cfg.instrucciones_pago %}
+    <hr>
+    <div class="small"><div class="text-muted">Cómo pagar</div>{{ cfg.instrucciones_pago|linebreaksbr }}</div>
+  {% endif %}
+
+  {% if cfg.pie_factura %}
+    <hr>
+    <div class="text-center fst-italic text-muted small">{{ cfg.pie_factura|linebreaksbr }}</div>
+  {% endif %}
+</div>
+
+<style>
+  .factura { max-width: 620px; background:#fff; border:1px solid #e6e9ed; border-radius:8px; padding:26px; }
+  .marca-puntored { display:flex; align-items:center; gap:12px; }
+  .marca-puntored .p { font-size:1.9rem; font-weight:400; letter-spacing:.12em; color:#1a1a1a; }
+  .marca-puntored .r { font-size:1.9rem; font-weight:800; letter-spacing:.04em; color:#c00023; margin-left:.28em; }
+  .marca-puntored .ln { flex:0 0 26px; height:2px; background:#1a1a1a; }
+  @media print {
+    .sidebar, .topbar, .d-print-none { display:none !important; }
+    .content, .main, body { background:#fff !important; padding:0 !important; }
+    .factura { border:none; max-width:100%; }
+  }
+</style>
+{% endblock %}

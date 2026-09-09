@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Clientes en línea — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Clientes en línea{% endblock %}
+{% block nav_en_linea %}active{% endblock %}
+
+{% block content %}
+{% if error %}<div class="alert alert-warning">{{ error }}</div>{% endif %}
+
+<div class="tiles mb-3">
+  <div class="tile"><div class="k">En línea</div><div class="v ok">{{ n_on }}</div></div>
+  <div class="tile"><div class="k">Sin conexión</div><div class="v bad">{{ n_off }}</div></div>
+</div>
+
+<div class="mb-2">
+  <a href="?" class="btn btn-sm btn-outline-secondary">Todos</a>
+  <button class="btn btn-sm btn-outline-danger" onclick="filtrar('off')">Solo sin conexión</button>
+  <button class="btn btn-sm btn-outline-success" onclick="filtrar('on')">Solo en línea</button>
+  <a href="{% url 'clientes:en_linea' %}" class="btn btn-sm btn-outline-primary">↻ Refrescar</a>
+</div>
+
+<div class="card-panel p-0">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Cliente</th><th>IP</th><th>Zona</th><th>Estado</th><th>Conexión</th><th>Descargado</th><th>Subido</th></tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+        <tr class="fila {% if f.en_linea %}on{% else %}off table-danger{% endif %}">
+          <td><a href="{% url 'clientes:detalle' f.c.pk %}">{{ f.c.nombre }}</a></td>
+          <td><code>{{ f.c.ip }}</code></td>
+          <td>{{ f.c.zona.nombre|default:"—" }}</td>
+          <td><span class="badge badge-estado-{{ f.c.estado }}">{{ f.c.get_estado_display }}</span></td>
+          <td>
+            {% if f.en_linea %}<span class="text-success fw-bold">● EN LÍNEA</span>
+            {% else %}<span class="text-danger fw-bold">● SIN CONEXIÓN</span>{% endif %}
+            <span class="text-muted small">({{ f.arp }})</span>
+          </td>
+          <td>{{ f.baj }}</td>
+          <td>{{ f.sub }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">Sin datos.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="text-muted small mt-2">
+  "En línea" se calcula con la tabla ARP del router (el equipo del cliente respondió).
+  Un cliente sin tráfico un rato puede salir "sin conexión" aunque esté prendido.
+</p>
+
+<script>
+function filtrar(q){
+  document.querySelectorAll('tr.fila').forEach(tr=>{
+    tr.hidden = (q==='off' && tr.classList.contains('on')) || (q==='on' && tr.classList.contains('off'));
+  });
+}
+</script>
+{% endblock %}

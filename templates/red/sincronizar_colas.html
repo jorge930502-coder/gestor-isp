@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Sincronizar colas — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Aplicar las velocidades del plan al router{% endblock %}
+{% block nav_colas %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card-panel">
+      <p>Pone la <strong>velocidad del plan</strong> (la que ves en el panel) en la cola
+         de cada cliente en el Mikrotik. Útil cuando el router quedó con velocidades
+         viejas de otro sistema.</p>
+      <p class="small text-danger">⚠ Cambia la velocidad real de los clientes.
+         Corre primero <strong>Simular</strong> para ver qué sube y qué baja.</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="solo_sube" value="1" id="ss" checked>
+          <label class="form-check-label" for="ss">Solo los que <strong>suben</strong> (no bajarle a nadie)</label>
+        </div>
+        <button type="submit" name="modo" value="simular" class="btn btn-outline-primary">Simular</button>
+        <button type="submit" name="modo" value="aplicar" class="btn btn-danger">Aplicar en el router</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card-panel h-100">
+      <h2 class="h6 text-muted">Resultado</h2>
+      {% if salida %}
+        <pre style="background:#1e1e1e;color:#e6e6e6;padding:12px;border-radius:6px;max-height:70vh;overflow:auto;">{{ salida }}</pre>
+      {% else %}
+        <p class="text-muted small">Corre "Simular" para ver el detalle.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

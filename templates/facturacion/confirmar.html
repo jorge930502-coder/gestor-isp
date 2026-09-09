@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} — {{ APP_NAME }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card-panel">
+      <p class="fs-5">{{ mensaje }}</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ volver }}">
+        <button type="submit" class="btn {% if peligro %}btn-danger{% else %}btn-warning{% endif %}">
+          Sí, {{ titulo|lower }}
+        </button>
+        <a href="{{ volver }}" class="btn btn-outline-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

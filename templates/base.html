@@ -1,0 +1,83 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+{% if user.is_authenticated %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">Gestor<span>ISP</span></div>
+    <div class="user">
+      <strong>{{ user.get_full_name|default:user.get_username }}</strong>
+      {% for g in user.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% if user.is_superuser %}Superusuario{% endif %}{% endfor %}
+    </div>
+    <nav>
+      <div class="section">Principal</div>
+      <a class="item {% block nav_tablero %}{% endblock %}" href="{% url 'dashboard' %}"><span class="ico">▣</span> Tablero</a>
+
+      <div class="section">Clientes</div>
+      <a class="item {% block nav_clientes %}{% endblock %}" href="{% url 'clientes:lista' %}"><span class="ico">☰</span> Lista de clientes</a>
+      <a class="item {% block nav_cliente_nuevo %}{% endblock %}" href="{% url 'clientes:crear' %}"><span class="ico">＋</span> Nuevo cliente</a>
+      <a class="item {% block nav_asignar %}{% endblock %}" href="{% url 'clientes:asignar_lote' %}"><span class="ico">⚟</span> Asignar en lote</a>
+      <a class="item {% block nav_en_linea %}{% endblock %}" href="{% url 'clientes:en_linea' %}"><span class="ico">◉</span> Clientes en línea</a>
+      <a class="item {% block nav_importar %}{% endblock %}" href="{% url 'red:importar' %}"><span class="ico">⇩</span> Importar de Mikrotik</a>
+
+      <div class="section">Finanzas</div>
+      <a class="item {% block nav_pagos %}{% endblock %}" href="{% url 'facturacion:registrar_pago' %}"><span class="ico">＄</span> Registrar pago</a>
+      <a class="item {% block nav_pago_lote %}{% endblock %}" href="{% url 'facturacion:pago_lote' %}"><span class="ico">☑</span> Pagos en lote</a>
+      <a class="item {% block nav_facturas %}{% endblock %}" href="{% url 'facturacion:facturas' %}"><span class="ico">▤</span> Facturas</a>
+      <a class="item {% block nav_lista_pagos %}{% endblock %}" href="{% url 'facturacion:pagos' %}"><span class="ico">≣</span> Historial de pagos</a>
+      <a class="item {% block nav_morosos %}{% endblock %}" href="{% url 'facturacion:morosos' %}"><span class="ico">⚠</span> Morosos</a>
+
+      <div class="section">Catálogo</div>
+      <a class="item {% block nav_planes %}{% endblock %}" href="{% url 'catalogo:planes' %}"><span class="ico">⚡</span> Planes</a>
+      <a class="item {% block nav_zonas %}{% endblock %}" href="{% url 'catalogo:zonas' %}"><span class="ico">◐</span> Zonas</a>
+
+      <div class="section">Red</div>
+      <a class="item {% block nav_routers %}{% endblock %}" href="{% url 'red:routers' %}"><span class="ico">⇄</span> Routers</a>
+      <a class="item {% block nav_trafico %}{% endblock %}" href="{% url 'red:trafico' %}"><span class="ico">📈</span> Tráfico (consumo)</a>
+      <a class="item {% block nav_cortes %}{% endblock %}" href="{% url 'red:sincronizar_cortes' %}"><span class="ico">✂</span> Sincronizar cortes</a>
+      <a class="item {% block nav_colas %}{% endblock %}" href="{% url 'red:sincronizar_colas' %}"><span class="ico">⚡</span> Aplicar planes al router</a>
+      <a class="item {% block nav_portal_router %}{% endblock %}" href="{% url 'red:configurar_portal' %}"><span class="ico">▦</span> Portal en el router</a>
+
+      <div class="section">Administración</div>
+      <a class="item {% block nav_config %}{% endblock %}" href="{% url 'config' %}"><span class="ico">⚙</span> Configuración</a>
+      {% if user.is_staff %}<a class="item" href="/admin/"><span class="ico">🛠</span> Panel Django</a>{% endif %}
+      <a class="item" href="{% url 'dashboard' %}" onclick="return false" style="opacity:.45"><span class="ico">🚚</span> Proveedores (pronto)</a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="title">{% block page_title %}{{ APP_NAME }}{% endblock %}</div>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-secondary btn-sm" type="submit">Salir</button>
+      </form>
+    </div>
+    <div class="content">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% else %}
+  {% block content_anon %}{% endblock %}
+{% endif %}
+
+<script src="{% static 'vendor/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

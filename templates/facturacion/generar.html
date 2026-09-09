@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Generar facturas — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Generar facturas del mes{% endblock %}
+{% block nav_facturas %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card-panel">
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="periodo">Mes a facturar</label>
+          <input type="month" id="periodo" name="periodo" value="{{ periodo_def }}" class="form-control">
+          <div class="form-text">Crea una factura por cada cliente Activo o Suspendido que no la tenga aún.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="monto_defecto">Monto si el cliente no tiene plan</label>
+          <input type="number" id="monto_defecto" name="monto_defecto" value="0" min="0" step="1000" class="form-control">
+          <div class="form-text">Si el cliente sí tiene plan, se usa el precio del plan.</div>
+        </div>
+        <button type="submit" name="modo" value="simular" class="btn btn-outline-primary">Simular</button>
+        <button type="submit" name="modo" value="generar" class="btn btn-success"
+                style="background:#1abb9c;border-color:#1abb9c">Generar</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card-panel h-100">
+      <h2 class="h6 text-muted">Resultado</h2>
+      {% if salida %}
+        <pre style="background:#1e1e1e;color:#e6e6e6;padding:12px;border-radius:6px;">{{ salida }}</pre>
+      {% else %}
+        <p class="text-muted small">Corre "Simular" para ver cuántas facturas se crearían.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

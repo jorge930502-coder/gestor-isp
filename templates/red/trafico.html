@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Tráfico — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Consumo en tiempo real{% endblock %}
+{% block nav_trafico %}active{% endblock %}
+
+{% block content %}
+{% if not router %}
+  <div class="alert alert-warning">No hay un router configurado.</div>
+{% else %}
+<ul class="nav nav-tabs mb-3" id="tabs">
+  <li class="nav-item"><a class="nav-link active" href="#" data-que="proveedor">Proveedores</a></li>
+  <li class="nav-item"><a class="nav-link" href="#" data-que="clientes">Clientes</a></li>
+</ul>
+
+<div class="card-panel">
+  <div class="d-flex justify-content-between mb-2">
+    <div><span class="text-muted small" id="subt">Proveedores</span></div>
+    <div>
+      <span class="badge bg-success" id="lbl-baj">Bajada: —</span>
+      <span class="badge bg-primary" id="lbl-sub">Subida: —</span>
+    </div>
+  </div>
+  <canvas id="chart" height="90"></canvas>
+  <div class="mt-3 small text-muted" id="detalle"></div>
+</div>
+<p class="text-muted small mt-2">Se actualiza cada 3 segundos mientras esta pantalla esté abierta.</p>
+
+<script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+<script>
+(function () {
+  const MAXP = 40;
+  let que = 'proveedor';
+  const labels = [], baj = [], sub = [];
+  const ctx = document.getElementById('chart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Bajada (Mbps)', data: baj, borderColor: '#1abb9c', backgroundColor: 'rgba(26,187,156,.12)', fill: true, tension: .3, pointRadius: 0 },
+      { label: 'Subida (Mbps)', data: sub, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,.10)', fill: true, tension: .3, pointRadius: 0 },
+    ]},
+    options: { animation: false, responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'Mbps' } } },
+      plugins: { legend: { position: 'bottom' } } }
+  });
+
+  function fmt(bps) {
+    if (bps >= 1e9) return (bps/1e9).toFixed(2) + ' Gbps';
+    if (bps >= 1e6) return (bps/1e6).toFixed(1) + ' Mbps';
+    if (bps >= 1e3) return (bps/1e3).toFixed(0) + ' Kbps';
+    return bps + ' bps';
+  }
+
+  function tick() {
+    fetch('{% url "red:trafico_datos" %}?que=' + que)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { document.getElementById('detalle').textContent = d.error; return; }
+        const rx = d.total_rx || 0, tx = d.total_tx || 0;
+        document.getElementById('lbl-baj').textContent = 'Bajada: ' + fmt(rx);
+        document.getElementById('lbl-sub').textContent = 'Subida: ' + fmt(tx);
+        labels.push(new Date().toLocaleTimeString().slice(0,8));
+        baj.push(+(rx/1e6).toFixed(2));
+        sub.push(+(tx/1e6).toFixed(2));
+        while (labels.length > MAXP) { labels.shift(); baj.shift(); sub.shift(); }
+        chart.update();
+        document.getElementById('detalle').innerHTML = (d.interfaces || []).map(i =>
+          `<b>${i.nombre}</b>${i.comentario ? ' ('+i.comentario+')' : ''}: ↓ ${fmt(i.rx_bps)} · ↑ ${fmt(i.tx_bps)}`
+        ).join('<br>');
+      })
+      .catch(() => { document.getElementById('detalle').textContent = 'Sin datos.'; });
+  }
+
+  document.querySelectorAll('#tabs a').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelectorAll('#tabs a').forEach(x => x.classList.remove('active'));
+    a.classList.add('active');
+    que = a.dataset.que;
+    document.getElementById('subt').textContent = a.textContent;
+    labels.length = baj.length = sub.length = 0; chart.update();
+    tick();
+  }));
+
+  tick();
+  setInterval(tick, 3000);
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Asignar en lote — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Asignar zona / router / plan en lote{% endblock %}
+{% block nav_asignar %}active{% endblock %}
+
+{% block content %}
+<form method="get" class="card-panel mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Buscar</label>
+      <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Nombre, IP, cola...">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Zona</label>
+      <select name="zona" class="form-select">
+        <option value="">Todas</option>
+        <option value="sin" {% if f_zona == 'sin' %}selected{% endif %}>— Sin zona —</option>
+        {% for z in zonas %}<option value="{{ z.id }}" {% if f_zona == z.id|stringformat:'s' %}selected{% endif %}>{{ z.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Router</label>
+      <select name="router" class="form-select">
+        <option value="">Todos</option>
+        <option value="sin" {% if f_router == 'sin' %}selected{% endif %}>— Sin router —</option>
+        {% for r in routers %}<option value="{{ r.id }}" {% if f_router == r.id|stringformat:'s' %}selected{% endif %}>{{ r.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small mb-1">Estado</label>
+      <select name="estado" class="form-select">
+        <option value="">Todos</option>
+        {% for v, l in estados %}<option value="{{ v }}" {% if estado_sel == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-1 d-grid"><button class="btn btn-outline-primary">Ver</button></div>
+  </div>
+</form>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="card-panel mb-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Poner zona</label>
+        <select name="set_zona" class="form-select">
+          <option value="">(no cambiar)</option>
+          {% for z in zonas %}<option value="{{ z.id }}">{{ z.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Poner router</label>
+        <select name="set_router" class="form-select">
+          <option value="">(no cambiar)</option>
+          {% for r in routers %}<option value="{{ r.id }}">{{ r.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Poner plan</label>
+        <select name="set_plan" class="form-select">
+          <option value="">(no cambiar)</option>
+          {% for p in planes %}<option value="{{ p.id }}">{{ p.nombre }} — ${{ p.precio_mensual }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 text-end">
+        <button type="submit" class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">Aplicar a los marcados</button>
+      </div>
+    </div>
+    <hr>
+    <button type="submit" name="accion" value="zona_por_ip" class="btn btn-outline-primary btn-sm">
+      Asignar zona automáticamente por IP (usa la red de cada VLAN)
+    </button>
+  </div>
+
+  <div class="card-panel p-0">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width:40px"><input type="checkbox" id="all"></th>
+          <th>Cliente</th><th>IP</th><th>Zona</th><th>Router</th><th>Plan</th><th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in clientes %}
+          <tr>
+            <td><input type="checkbox" name="cliente" value="{{ c.pk }}" class="rowchk"></td>
+            <td><a href="{% url 'clientes:detalle' c.pk %}">{{ c.nombre }}</a></td>
+            <td><code>{{ c.ip|default:"—" }}</code></td>
+            <td class="{% if not c.zona %}text-danger{% endif %}">{{ c.zona.nombre|default:"— sin —" }}</td>
+            <td class="{% if not c.router %}text-danger{% endif %}">{{ c.router.nombre|default:"— sin —" }}</td>
+            <td>{{ c.plan.nombre|default:"—" }}</td>
+            <td><span class="badge badge-estado-{{ c.estado }}">{{ c.get_estado_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">Nada que mostrar con esos filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="text-muted small mt-2">{{ total }} clientes (se muestran hasta 500).</p>
+</form>
+
+<script>
+  document.getElementById('all').addEventListener('change', function (e) {
+    document.querySelectorAll('.rowchk').forEach(c => c.checked = e.target.checked);
+  });
+</script>
+{% endblock %}

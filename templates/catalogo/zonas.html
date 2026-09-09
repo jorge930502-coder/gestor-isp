@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Zonas — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Zonas{% endblock %}
+{% block nav_zonas %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <p class="text-muted mb-0">Sectores o barrios donde das servicio.</p>
+  <a href="{% url 'catalogo:zona_crear' %}" class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">+ Nueva zona</a>
+</div>
+
+<div class="card-panel p-0">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Nombre</th><th>VLAN</th><th>Red</th><th>Gateway</th><th>Clientes</th><th>Activa</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for z in zonas %}
+        <tr>
+          <td>{{ z.nombre }}</td>
+          <td>{{ z.vlan|default:"—" }}</td>
+          <td><code>{{ z.red_cidr|default:"—" }}</code></td>
+          <td>{{ z.gateway|default:"—" }}</td>
+          <td>{{ z.n_clientes }}</td>
+          <td>{% if z.activa %}<span class="badge bg-success">sí</span>{% else %}<span class="badge bg-secondary">no</span>{% endif %}</td>
+          <td class="text-end text-nowrap">
+            <a href="{% url 'catalogo:zona_editar' z.pk %}" class="btn btn-sm btn-outline-secondary">Editar</a>
+            {% if perms.catalogo.delete_zona %}
+              <a href="{% url 'catalogo:zona_eliminar' z.pk %}"
+                 class="btn btn-sm {% if z.n_clientes %}btn-outline-secondary disabled{% else %}btn-outline-danger{% endif %}">Eliminar</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay zonas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+:root {
+  --sb-bg: #2a3f54;
+  --sb-bg-2: #253544;
+  --sb-text: #e7e7e7;
+  --sb-muted: #8a9aa9;
+  --accent: #1abb9c;
+  --accent-dark: #169a80;
+  --topbar: #ffffff;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f7f7f7;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ---------- Layout ---------- */
+.layout { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  background: var(--sb-bg);
+  color: var(--sb-text);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar .brand {
+  padding: 16px 18px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar .brand span { color: var(--accent); }
+.sidebar .user {
+  padding: 14px 18px;
+  font-size: .85rem;
+  color: var(--sb-muted);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar .user strong { color: #fff; display: block; font-size: .95rem; }
+
+.sidebar nav { padding: 8px 0; overflow-y: auto; }
+.sidebar .section {
+  padding: 14px 18px 6px;
+  font-size: .7rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--sb-muted);
+}
+.sidebar a.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  color: var(--sb-text);
+  text-decoration: none;
+  font-size: .92rem;
+  border-left: 3px solid transparent;
+}
+.sidebar a.item:hover { background: var(--sb-bg-2); }
+.sidebar a.item.active {
+  background: var(--sb-bg-2);
+  border-left-color: var(--accent);
+  color: #fff;
+}
+.sidebar a.item .ico { width: 20px; text-align: center; opacity: .9; }
+
+/* ---------- Main ---------- */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  background: var(--topbar);
+  border-bottom: 1px solid #e2e2e2;
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar .title { font-size: 1.1rem; font-weight: 600; color: #34495e; }
+.content { padding: 22px; }
+
+/* ---------- Stat tiles ---------- */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
+.tile {
+  background: #fff;
+  border: 1px solid #e6e9ed;
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+.tile .k { font-size: .78rem; color: #94a3b1; text-transform: uppercase; letter-spacing: .04em; }
+.tile .v { font-size: 1.9rem; font-weight: 700; color: #34495e; line-height: 1.2; }
+.tile .v.ok { color: var(--accent-dark); }
+.tile .v.warn { color: #e67e22; }
+.tile .v.bad { color: #e74c3c; }
+.tile .v.mut { color: #95a5a6; }
+
+.card-panel {
+  background: #fff;
+  border: 1px solid #e6e9ed;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+/* ---------- Estado badges ---------- */
+.badge-estado-activo { background-color: #1abb9c !important; }
+.badge-estado-suspendido { background-color: #e74c3c !important; }
+.badge-estado-cancelado { background-color: #6c757d !important; }
+.badge-estado-gratis { background-color: #3498db !important; }
+.badge-estado-baja { background-color: #6c757d !important; }
+
+.table thead th { white-space: nowrap; }
+
+/* Semáforo de pago del mes: verde = al día, naranja = pendiente, rojo = suspendido */
+.pago-badge { font-weight: 700; font-size: .8rem; white-space: nowrap; }
+.pago-ok   { color: #159c81; }
+.pago-pend { color: #e8850c; }
+.pago-mal  { color: #e74c3c; }
+tr.fila-al_dia     td:first-child { box-shadow: inset 4px 0 0 #1abb9c; }
+tr.fila-pendiente  td:first-child { box-shadow: inset 4px 0 0 #e8850c; }
+tr.fila-pendiente  { background: #fff8f0; }
+tr.fila-suspendido td:first-child { box-shadow: inset 4px 0 0 #e74c3c; }
+tr.fila-suspendido { background: #fdeceb; }
+
+@media (max-width: 800px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; flex-direction: column; }
+  .sidebar nav { display: flex; flex-wrap: wrap; }
+  .sidebar .section { display: none; }
+  .sidebar a.item { border-left: none; }
+}

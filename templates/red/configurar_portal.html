@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Portal en el router — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Configurar portal de morosos en el router{% endblock %}
+{% block nav_cortes %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card-panel">
+      <p>Deja el/los router(s) listos para que, cuando un cliente cortado abra el
+         navegador, le salga tu <strong>página de pago</strong> (<code>/portal/</code>).</p>
+      <p class="small text-muted">
+        Aplica en el router: DNS del router, proxy en 8080, y redirecciones NAT del
+        puerto 80 y 53 para los que están en la lista de morosos. No repite reglas
+        que ya existan.
+      </p>
+      <p>Dirección del portal: <strong>{{ host|default:"(sin configurar)" }}</strong>
+        — se cambia en <a href="{% url 'config' %}">Configuración</a>.</p>
+      <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c"
+                {% if not host %}disabled{% endif %}>Configurar en el router</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card-panel h-100">
+      <h2 class="h6 text-muted">Resultado</h2>
+      {% if salida %}
+        <pre style="background:#1e1e1e;color:#e6e6e6;padding:12px;border-radius:6px;">{{ salida }}</pre>
+      {% else %}
+        <p class="text-muted small">Aquí sale el detalle al configurar.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Morosos — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Morosos{% endblock %}
+{% block nav_morosos %}active{% endblock %}
+
+{% block content %}
+<p class="text-muted">{{ n }} facturas vencidas sin pagar · deuda total <strong>${{ total }}</strong></p>
+
+<div class="card-panel p-0">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Cliente</th><th>IP</th><th>Periodo</th><th>Monto</th><th>Venció</th><th>Días</th><th>Corte</th><th>Estado</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for row in filas %}
+        <tr class="{% if row.para_corte %}table-danger{% endif %}">
+          <td><a href="{% url 'clientes:detalle' row.f.cliente.pk %}">{{ row.f.cliente.nombre }}</a></td>
+          <td><code>{{ row.f.cliente.ip|default:"—" }}</code></td>
+          <td>{{ row.f.periodo_texto }}</td>
+          <td>${{ row.f.monto }}</td>
+          <td>{{ row.f.vencimiento|date:"d/m/Y" }}</td>
+          <td>{{ row.dias }}</td>
+          <td>{{ row.f.corte|date:"d/m/Y"|default:"—" }}{% if row.para_corte %} <span class="badge bg-danger">ya</span>{% endif %}</td>
+          <td><span class="badge badge-estado-{{ row.f.cliente.estado }}">{{ row.f.cliente.get_estado_display }}</span></td>
+          <td class="text-end text-nowrap">
+            {% if row.f.cliente.telefono %}
+              <a href="{% url 'clientes:whatsapp_cobro' row.f.cliente.pk %}" target="_blank" class="btn btn-sm text-white" style="background:#25d366">WhatsApp</a>
+            {% endif %}
+            {% if perms.facturacion.add_pago %}
+              <a href="{% url 'facturacion:registrar_pago' %}?factura={{ row.f.pk }}" class="btn btn-sm btn-outline-success">Pago</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-4">Nadie moroso. 🎉</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

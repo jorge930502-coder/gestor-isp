@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Registrar pago — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Registrar pago{% endblock %}
+{% block nav_pagos %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card-panel">
+      {% if cliente %}
+        <p class="mb-3">
+          Cliente: <strong>{{ cliente.nombre }}</strong>
+          {% if cliente.ip %}<code>{{ cliente.ip }}</code>{% endif %}
+          — <span class="badge badge-estado-{{ cliente.estado }}">{{ cliente.get_estado_display }}</span>
+        </p>
+        {% if factura %}
+          <p class="text-muted">Factura {{ factura.periodo_texto }} — saldo ${{ factura.saldo }}</p>
+        {% endif %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="mb-3">
+            {% if field.name == 'reactivar' %}
+              <div class="form-check">{{ field }}
+                <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              </div>
+            {% else %}
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+            {% endif %}
+            {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+        <button class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">Guardar pago</button>
+        <a href="{% if cliente %}{% url 'clientes:detalle' cliente.pk %}{% else %}{% url 'clientes:lista' %}{% endif %}"
+           class="btn btn-outline-secondary">Cancelar</a>
+      </form>
+    </div>
+    <p class="text-muted small mt-2">
+      El pago se aplica a la factura pendiente más antigua del cliente. Si no hay
+      facturas, se guarda como pago suelto (queda en el historial).
+    </p>
+  </div>
+</div>
+{% endblock %}

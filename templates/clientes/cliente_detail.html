@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}{{ cliente.nombre }} — {{ APP_NAME }}{% endblock %}
+{% block page_title %}Cliente: {{ cliente.nombre }}{% endblock %}
+{% block nav_clientes %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1">{{ cliente.nombre }}</h1>
+    <span class="badge badge-estado-{{ cliente.estado }}">{{ cliente.get_estado_display }}</span>
+  </div>
+  <div>
+    {% if perms.facturacion.add_pago %}
+      <a href="{% url 'facturacion:registrar_pago' %}?cliente={{ cliente.pk }}" class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">Registrar pago</a>
+    {% endif %}
+    {% if cliente.telefono %}
+      <a href="{% url 'clientes:whatsapp_cobro' cliente.pk %}" target="_blank" class="btn text-white" style="background:#25d366;border-color:#25d366">WhatsApp</a>
+    {% endif %}
+    {% if perms.clientes.change_cliente %}
+      {% if cliente.estado == 'suspendido' %}
+        <a href="{% url 'clientes:cambiar_estado' cliente.pk %}?a=activo" class="btn btn-outline-success">Reactivar</a>
+      {% elif cliente.estado == 'activo' %}
+        <a href="{% url 'clientes:cambiar_estado' cliente.pk %}?a=suspendido" class="btn btn-outline-danger">Suspender</a>
+      {% endif %}
+    {% endif %}
+    <a href="{% url 'clientes:consumo' cliente.pk %}" class="btn btn-outline-success">Ver consumo</a>
+    {% if perms.clientes.change_cliente %}
+      <a href="{% url 'clientes:enviar_al_router' cliente.pk %}" class="btn btn-outline-dark">Enviar al router</a>
+      <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-outline-primary">Editar</a>
+    {% endif %}
+    <a href="{% url 'clientes:lista' %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+
+{% if cliente.estado == 'suspendido' %}
+  <div class="alert alert-danger d-flex justify-content-between align-items-center">
+    <span><strong>SUSPENDIDO</strong>{% if saldo > 0 %} — debe ${{ saldo }}{% endif %}.</span>
+    {% if perms.facturacion.add_pago %}
+      <a href="{% url 'facturacion:registrar_pago' %}?cliente={{ cliente.pk }}" class="btn btn-sm btn-light">Registrar pago y reactivar</a>
+    {% endif %}
+  </div>
+{% elif saldo > 0 %}
+  <div class="alert d-flex justify-content-between align-items-center" style="background:#fff3e0;border-color:#e8850c;color:#8a4b00">
+    <span><strong>PENDIENTE DE PAGO</strong> — debe ${{ saldo }}.</span>
+    {% if perms.facturacion.add_pago %}
+      <a href="{% url 'facturacion:registrar_pago' %}?cliente={{ cliente.pk }}" class="btn btn-sm btn-warning">Registrar pago</a>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="alert alert-success"><strong>AL DÍA</strong> — sin facturas pendientes.</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card"><div class="card-body">
+      <h2 class="h6 text-muted">Datos personales</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Documento</dt><dd class="col-sm-8">{{ cliente.documento|default:"—" }}</dd>
+        <dt class="col-sm-4">Teléfono</dt><dd class="col-sm-8">{{ cliente.telefono|default:"—" }}</dd>
+        <dt class="col-sm-4">Correo</dt><dd class="col-sm-8">{{ cliente.email|default:"—" }}</dd>
+        <dt class="col-sm-4">Dirección</dt><dd class="col-sm-8">{{ cliente.direccion|default:"—" }}</dd>
+      </dl>
+    </div></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card"><div class="card-body">
+      <h2 class="h6 text-muted">Servicio</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Zona</dt><dd class="col-sm-8">{{ cliente.zona.nombre|default:"—" }}</dd>
+        <dt class="col-sm-4">Plan</dt><dd class="col-sm-8">{{ cliente.plan|default:"—" }}</dd>
+        <dt class="col-sm-4">Cuota mensual</dt><dd class="col-sm-8"><strong>${{ cliente.monto_a_facturar }}</strong> <span class="text-muted small">({{ cliente.detalle_cobro }})</span></dd>
+        <dt class="col-sm-4">Router</dt><dd class="col-sm-8">{{ cliente.router.nombre|default:"—" }}</dd>
+        <dt class="col-sm-4">IP asignada</dt><dd class="col-sm-8"><code>{{ cliente.ip|default:"—" }}</code></dd>
+        <dt class="col-sm-4">Nombre en el router</dt><dd class="col-sm-8">{{ cliente.nombre_cola|default:"—" }}</dd>
+        <dt class="col-sm-4">Día de pago</dt><dd class="col-sm-8">{{ cliente.dia_de_pago }}</dd>
+        <dt class="col-sm-4">Día de corte</dt><dd class="col-sm-8">{{ cliente.dia_de_corte|default:"— (no se corta solo)" }}</dd>
+        <dt class="col-sm-4">Contratación</dt><dd class="col-sm-8">{{ cliente.get_forma_contratacion_display|default:"—" }}</dd>
+        <dt class="col-sm-4">Registro</dt><dd class="col-sm-8">{{ cliente.fecha_registro|default:"—" }}</dd>
+        <dt class="col-sm-4">Instalación</dt><dd class="col-sm-8">{{ cliente.fecha_instalacion|default:"—" }}</dd>
+        <dt class="col-sm-4">Cancelación</dt><dd class="col-sm-8">{{ cliente.fecha_cancelacion|default:"—" }}</dd>
+      </dl>
+    </div></div>
+  </div>
+  {% if cliente.notas %}
+  <div class="col-12">
+    <div class="card"><div class="card-body">
+      <h2 class="h6 text-muted">Notas</h2>
+      <p class="mb-0">{{ cliente.notas|linebreaksbr }}</p>
+    </div></div>
+  </div>
+  {% endif %}
+
+  <div class="col-lg-7">
+    <div class="card"><div class="card-body">
+      <div class="d-flex justify-content-between">
+        <h2 class="h6 text-muted">Facturas</h2>
+        <span class="{% if saldo > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">Saldo: ${{ saldo }}</span>
+      </div>
+      <table class="table table-sm mb-0">
+        <tbody>
+        {% for f in facturas %}
+          <tr>
+            <td><a href="{% url 'facturacion:factura_detalle' f.pk %}">{{ f.periodo_texto }}</a></td>
+            <td>${{ f.monto }}</td>
+            <td>
+              {% if f.estado == 'pagada' %}<span class="badge bg-success">Pagada</span>
+              {% elif f.estado == 'anulada' %}<span class="badge bg-secondary">Anulada</span>
+              {% elif f.vencida %}<span class="badge bg-danger">Vencida {{ f.vencimiento|date:"d/m" }}</span>
+              {% else %}<span class="badge bg-warning text-dark">Pendiente {{ f.vencimiento|date:"d/m" }}</span>{% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              {% if f.estado != 'pagada' and f.estado != 'anulada' and perms.facturacion.add_pago %}
+                <a href="{% url 'facturacion:registrar_pago' %}?factura={{ f.pk }}" class="btn btn-sm btn-outline-success py-0">Pagar</a>
+              {% endif %}
+              {% if f.estado != 'anulada' and perms.facturacion.change_factura %}
+                <a href="{% url 'facturacion:factura_anular' f.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-warning py-0">Anular</a>
+              {% endif %}
+              {% if perms.facturacion.delete_factura %}
+                <a href="{% url 'facturacion:factura_eliminar' f.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-danger py-0">✕</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td class="text-muted">Sin facturas.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card"><div class="card-body">
+      <h2 class="h6 text-muted">Últimos pagos</h2>
+      <ul class="list-group list-group-flush">
+        {% for p in pagos %}
+          <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+            <span>{{ p.fecha|date:"d/m/Y" }} · {{ p.get_metodo_display }}</span>
+            <span>
+              <strong>${{ p.monto }}</strong>
+              {% if perms.facturacion.delete_pago %}
+                <a href="{% url 'facturacion:pago_eliminar' p.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-outline-danger py-0 ms-2">✕</a>
+              {% endif %}
+            </span>
+          </li>
+        {% empty %}
+          <li class="list-group-item px-0 text-muted">Sin pagos.</li>
+        {% endfor %}
+      </ul>
+    </div></div>
+
+    <div class="card mt-3 border-primary border-2">
+      <div class="card-header text-white fw-bold" style="background:#0d6efd">➕ Servicios adicionales (TV, teléfono, etc.)</div>
+      <div class="card-body">
+      <ul class="list-group list-group-flush mb-2">
+        {% for a in cliente.adicionales.all %}
+          <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+            <span>{{ a.concepto }}{% if not a.activo %} <span class="text-muted">(inactivo)</span>{% endif %}</span>
+            <span>
+              <strong>${{ a.monto }}</strong>/mes
+              {% if perms.facturacion.change_factura %}
+                <form method="post" action="{% url 'facturacion:adicional_eliminar' a.pk %}" class="d-inline ms-2">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger py-0">✕</button>
+                </form>
+              {% endif %}
+            </span>
+          </li>
+        {% empty %}
+          <li class="list-group-item px-0 text-muted">Ninguno.</li>
+        {% endfor %}
+      </ul>
+      {% if perms.facturacion.change_factura %}
+      <form method="post" action="{% url 'facturacion:adicional_agregar' cliente.pk %}" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <div class="col-5">
+          <label class="form-label small mb-0">Concepto</label>
+          <input name="concepto" class="form-control" placeholder="Televisión" value="Televisión">
+        </div>
+        <div class="col-4">
+          <label class="form-label small mb-0">Valor / mes</label>
+          <input name="monto" type="number" step="1000" class="form-control" placeholder="10000">
+        </div>
+        <div class="col-3 d-grid"><button class="btn btn-primary">Agregar</button></div>
+      </form>
+      {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card"><div class="card-body">
+      <h2 class="h6 text-muted">Historial</h2>
+      <ul class="list-group list-group-flush">
+        {% for e in eventos %}
+          <li class="list-group-item px-0">
+            <span class="text-muted small">{{ e.fecha|date:"d/m/Y H:i" }}</span>
+            — {{ e.get_accion_display }}
+            {% if e.usuario %}<span class="text-muted">por {{ e.usuario.get_username }}</span>{% endif %}
+            <div class="small">{{ e.detalle }}</div>
+          </li>
+        {% empty %}
+          <li class="list-group-item px-0 text-muted">Sin movimientos.</li>
+        {% endfor %}
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

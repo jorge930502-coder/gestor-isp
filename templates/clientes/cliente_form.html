@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Editar cliente{% else %}Nuevo cliente{% endif %} — {{ APP_NAME }}{% endblock %}
+{% block page_title %}{% if object %}Editar cliente{% else %}Nuevo cliente{% endif %}{% endblock %}
+{% block nav_clientes %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      {% for titulo, campos in form.secciones %}
+        <div class="card-panel mb-3">
+          <h2 class="h6 text-muted mb-3">{{ titulo }}</h2>
+          <div class="row g-3">
+            {% for field in campos %}
+              <div class="col-md-{% if field.name == 'notas' %}12{% else %}4{% endif %}">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.name == 'ip' %}<div class="form-text" id="ip_hint">—</div>{% endif %}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                {% for error in field.errors %}
+                  <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+      <button type="submit" class="btn btn-success" style="background:#1abb9c;border-color:#1abb9c">Guardar</button>
+      <a href="{% if object %}{% url 'clientes:detalle' object.pk %}{% else %}{% url 'clientes:lista' %}{% endif %}"
+         class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  var zona = document.getElementById('id_zona');
+  var ip = document.getElementById('id_ip');
+  var hint = document.getElementById('ip_hint');
+  if (!zona || !ip) return;
+
+  var actual = ip.value;  // IP ya asignada (modo editar)
+
+  function opcion(val, texto, selected) {
+    var o = document.createElement('option');
+    o.value = val; o.textContent = texto || val;
+    if (selected) o.selected = true;
+    return o;
+  }
+
+  function cargar() {
+    var id = zona.value;
+    if (!id) {
+      ip.innerHTML = '';
+      ip.appendChild(opcion('', '— elige primero la zona —'));
+      hint.textContent = 'Elige una zona para ver las IPs libres.';
+      return;
+    }
+    hint.textContent = 'Buscando IPs libres...';
+    var url = '{% url "clientes:ips_libres" %}?zona=' + encodeURIComponent(id)
+              + (actual ? '&actual=' + encodeURIComponent(actual) : '');
+    fetch(url, {headers: {'X-Requested-With': 'fetch'}})
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        ip.innerHTML = '';
+        ip.appendChild(opcion('', '— elige una IP —'));
+        var libres = d.libres || [];
+        if (actual && libres.indexOf(actual) === -1) {
+          ip.appendChild(opcion(actual, actual + ' (actual)', true));
+        }
+        libres.forEach(function (x) {
+          ip.appendChild(opcion(x, x, x === actual));
+        });
+        if (d.error) { hint.textContent = d.error; }
+        else { hint.textContent = libres.length + ' IPs libres de ' + d.total + ' en la subred.'; }
+      })
+      .catch(function () { hint.textContent = 'No se pudieron cargar las IPs.'; });
+  }
+
+  zona.addEventListener('change', function () { actual = ''; cargar(); });
+  cargar();
+})();
+</script>
+{% endblock %}
