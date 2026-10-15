@@ -26,6 +26,14 @@ agrega `--commit` para aplicar).
 - Python 3.12+
 - (Opcional para producción) PostgreSQL
 
+## Instalación rápida (Windows)
+
+1. Instala [Python](https://www.python.org/downloads/) marcando **Add Python to PATH**.
+2. Descarga el proyecto: **Code → Download ZIP** y descomprímelo.
+3. Doble clic en **`INICIAR.bat`**. Instala todo la primera vez, abre el navegador
+   en http://127.0.0.1:8000/ (usuario `admin_isp`, contraseña `demo12345`).
+   No cierres la ventana negra mientras uses el panel.
+
 ## Instalación
 
 ```bash
@@ -79,6 +87,14 @@ clientes/      Cliente (alta/edición/listado/detalle con historial)
 templates/     plantillas Bootstrap
 static/        CSS y Bootstrap servido localmente (sin CDN)
 ```
+
+## Colas simples en Mikrotik
+
+Las colas simples se evalúan de arriba hacia abajo y el tráfico se queda en la
+primera que coincide. Si el router tiene una cola general (p. ej. `total megas`
+con target en las VLAN de clientes) por encima de las de clientes, éstas no
+limitan ni cuentan consumo. En **Red → Routers**, pon el nombre de esa cola en
+**cola padre** y el sistema creará las colas de clientes como hijas suyas.
 
 ## Notas de configuración (.env)
 

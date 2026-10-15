@@ -25,6 +25,11 @@ class Router(models.Model):
         "interfaces de clientes", max_length=200, blank=True,
         help_text="Nombres separados por coma, ej. vlan101,vlan102,vlan103",
     )
+    cola_padre = models.CharField(
+        "cola padre", max_length=80, blank=True,
+        help_text="Nombre de la cola simple general, ej. total megas. Las colas de "
+                  "clientes se crean como hijas suyas; si no, quedan debajo y no cuentan consumo.",
+    )
     activo = models.BooleanField("activo", default=True)
     notas = models.CharField("notas", max_length=200, blank=True)
 

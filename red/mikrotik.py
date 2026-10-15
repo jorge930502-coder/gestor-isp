@@ -134,6 +134,8 @@ def bloquear_ip(router, ip: str, lista: str, comentario: str = "") -> bool:
         datos = {"list": lista, "address": ip}
         if comentario:
             datos["comment"] = comentario[:100]
+        if router.cola_padre:
+            datos["parent"] = router.cola_padre
         try:
             path.add(**datos)
         except TrapError as exc:
@@ -292,6 +294,9 @@ def crear_o_actualizar_cola(router, nombre, ip, subida_mbps, bajada_mbps, coment
     """Crea (o actualiza si ya existe por IP o por nombre) una cola simple.
 
     max-limit de RouterOS es 'subida/bajada' desde el punto de vista del target.
+    Si el router tiene `cola_padre`, la cola queda como hija de esa: las colas
+    simples se evalúan de arriba hacia abajo y una cola general (p. ej. con
+    target en las VLAN de clientes) se quedaría con todo el tráfico.
     Devuelve ('creada'|'actualizada', detalle).
     """
     max_limit = f"{int(subida_mbps or 0)}M/{int(bajada_mbps or 0)}M"
@@ -311,6 +316,8 @@ def crear_o_actualizar_cola(router, nombre, ip, subida_mbps, bajada_mbps, coment
         }
         if comentario:
             datos["comment"] = comentario[:100]
+        if router.cola_padre:
+            datos["parent"] = router.cola_padre
         try:
             if existente:
                 datos[".id"] = existente[".id"]

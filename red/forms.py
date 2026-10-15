@@ -15,7 +15,7 @@ class RouterForm(forms.ModelForm):
         model = Router
         fields = [
             "nombre", "host", "api_puerto", "usa_tls", "usuario",
-            "password", "lista_morosos", "activo", "notas",
+            "password", "lista_morosos", "cola_padre", "activo", "notas",
         ]
 
     def __init__(self, *args, **kwargs):
